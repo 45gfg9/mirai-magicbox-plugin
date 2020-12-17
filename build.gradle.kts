@@ -1,5 +1,5 @@
 plugins {
-    val kt = "1.4.10"
+    val kt = "1.4.20"
 
     kotlin("jvm") version kt
     kotlin("kapt") version kt
@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "net.im45.bot"
-version = "0.1"
+version = "1.0-SNAPSHOT"
 
 repositories {
     maven("https://maven.aliyun.com/repository/public")
@@ -16,11 +16,8 @@ repositories {
 
 dependencies {
     val miraiCore = "1.3.3"
-    val miraiConsole = "1.0.1"
+    val miraiConsole = "1.1.0"
     val autoService = "1.0-rc7"
-
-    implementation("io.ktor:ktor-client-auth:1.4.1")
-    implementation("com.google.code.gson:gson:2.8.6")
 
     kapt("com.google.auto.service:auto-service:$autoService")
     compileOnly(kotlin("stdlib"))
