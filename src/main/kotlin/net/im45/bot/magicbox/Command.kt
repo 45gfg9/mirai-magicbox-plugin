@@ -1,5 +1,7 @@
 package net.im45.bot.magicbox
 
+import io.ktor.util.*
+import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.message.data.flash
@@ -10,6 +12,7 @@ import net.mamoe.mirai.utils.ExternalResource.Companion.uploadAsImage
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.stream.Collectors
 
 private const val errMsg = "Error: No such directory"
@@ -28,7 +31,7 @@ private suspend fun CommandSender.error() {
 object MBX : SimpleCommand(
     MagicBox, "mbx"
 ) {
-    private val IMAGE_EXT = listOf("jpg", "jpeg", "png", "gif")
+    private val IMAGE_EXT = arrayOf("jpg", "jpeg", "png", "gif")
     private val magic: MutableList<File> = mutableListOf()
 
     internal fun reload(
@@ -37,12 +40,12 @@ object MBX : SimpleCommand(
     ): Boolean {
         Config.recurseSubDirectories = recurseSubDirectories
         if (!checkDirectory(fromPath)) return false
-        val path = Path.of(fromPath)
+        val path = Paths.get(fromPath)
 
         magic.clear()
         magic += (if (recurseSubDirectories) Files.walk(path) else Files.list(path))
-            .map(Path::toFile)
             .filter { it.extension.toLowerCase() in IMAGE_EXT }
+            .map(Path::toFile)
             .collect(Collectors.toList())
 
         return true
@@ -62,13 +65,14 @@ object MBX : SimpleCommand(
 
         val resource = magic.random().toExternalResource()
 
-        if (subject is Group) when (Config.groupTrusts.getValue(subject.id)) {
-            Trust.NOT -> return
-            Trust.UNKNOWN -> resource.sendAsImageTo(user)
-            Trust.MARGINAL -> resource.sendAsImageTo(subject).recallIn(Config.marginallyRecallIn)
-            Trust.FULL -> resource.uploadAsImage(subject).flash().sendTo(subject)
-            Trust.ULTIMATE -> resource.sendAsImageTo(subject)
-        }
+        if (subject is Group)
+            when (Config.groupTrusts.getValue(subject.id)) {
+                Trust.NOT -> return
+                Trust.UNKNOWN -> resource.sendAsImageTo(user)
+                Trust.MARGINAL -> resource.sendAsImageTo(subject).recallIn(Config.marginallyRecallIn)
+                Trust.FULL -> resource.uploadAsImage(subject).flash().sendTo(subject)
+                Trust.ULTIMATE -> resource.sendAsImageTo(subject)
+            }
         else resource.sendAsImageTo(subject)
 
         Data.served++
@@ -95,26 +99,26 @@ object Control : CompositeCommand(
     @SubCommand
     suspend fun CommandSender.reload() {
         if (MBX.reload())
-            sendMessage("MagicBox reloaded")
+            sendMessage("MagicBox 已重载")
         else error()
     }
 
     @SubCommand
-    suspend fun CommandSender.defaultTrust(trust: String) {
-        Config.defaultTrust = Trust.valueOf(trust)
-        sendMessage("Set default trust to $trust")
+    suspend fun CommandSender.defaultTrust(trust: Trust) {
+        Config.defaultTrust = trust
+        sendMessage("设置默认信任等级为$trust")
     }
 
     @SubCommand
-    suspend fun UserCommandSender.trust(trust: String) {
+    suspend fun UserCommandSender.trust(trust: Trust) {
         if (subject is Group)
             trust(subject as Group, trust)
     }
 
     @SubCommand
-    suspend fun CommandSender.trust(group: Group, trust: String) {
-        Config.groupTrusts[group.id] = Trust.valueOf(trust)
-        sendMessage("$trust trust ${group.name}")
+    suspend fun CommandSender.trust(group: Group, trust: Trust) {
+        Config.groupTrusts[group.id] = trust
+        sendMessage("${trust}信任 ${group.name}")
     }
 
     @SubCommand
@@ -126,17 +130,17 @@ object Control : CompositeCommand(
     @SubCommand
     suspend fun CommandSender.distrust(group: Group) {
         Config.groupTrusts.remove(group.id)
-        sendMessage("Distrusted group ${group.name}")
+        sendMessage("移除 ${group.name} 的信任等级")
     }
 
     @SubCommand
     suspend fun CommandSender.trusts() {
         sendMessage(buildString {
-            append("Default trust level is ${Config.defaultTrust}\n")
+            append("默认信任等级：${Config.defaultTrust}\n")
             Config.groupTrusts
                 .map { e -> "${e.key}\t${e.value}" }
                 .run {
-                    append(if (isEmpty()) "No trust settings" else joinToString("\n"))
+                    append(if (isEmpty()) "无信任设置" else joinToString("\n"))
                 }
         })
     }
@@ -145,18 +149,18 @@ object Control : CompositeCommand(
     suspend fun CommandSender.enable() {
         if (checkDirectory()) {
             Config.enable = true
-            sendMessage("MagicBox enabled")
+            sendMessage("MagicBox 已启用")
         } else error()
     }
 
     @SubCommand
     suspend fun CommandSender.disable() {
         Config.enable = false
-        sendMessage("MagicBox disabled")
+        sendMessage("MagicBox 已禁用")
     }
 
     @SubCommand
     suspend fun CommandSender.stat() {
-        sendMessage("MagicBox is ${if (Config.enable) "enabled" else "disabled"}, currently served ${Data.served} pictures")
+        sendMessage("MagicBox ${if (Config.enable) "启" else "禁"}用，目前已发送图片 ${Data.served} 张")
     }
 }

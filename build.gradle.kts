@@ -1,29 +1,15 @@
 plugins {
-    val kt = "1.4.21"
+    val kt = "1.5.0"
 
     kotlin("jvm") version kt
-    kotlin("kapt") version kt
-    id("net.mamoe.mirai-console") version "2.0.0"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    kotlin("plugin.serialization") version kt
+    id("net.mamoe.mirai-console") version "2.6.4"
 }
 
 group = "net.im45.bot"
-version = "1.0.0-dev-1"
+version = "1.0.0-dev-2"
 
 repositories {
     maven("https://maven.aliyun.com/repository/public")
     mavenCentral()
-}
-
-mirai {
-    coreVersion = "2.1.0"
-}
-
-kotlin.sourceSets.all {
-    languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
-}
-
-kotlin.target.compilations.all {
-    kotlinOptions.freeCompilerArgs += "-Xjvm-default=enable"
-    kotlinOptions.jvmTarget = "11"
 }

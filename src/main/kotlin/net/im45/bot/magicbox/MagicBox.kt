@@ -8,7 +8,7 @@ import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 object MagicBox : KotlinPlugin(
     JvmPluginDescription(
         "net.im45.bot.magicbox",
-        "1.0.0",
+        "1.0.0-dev-2",
         "MagicBox"
     )
 ) {
